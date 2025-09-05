@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SmartBudget Enhanced</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #e3f2fd;
+      --card: #ffffffee;
+      --text: #0d47a1;
+      --accent: #1e88e5;
+      --glass: rgba(255, 255, 255, 0.3);
+      --button-hover: #1565c0;
+    }
+    [data-theme="dark"] {
+      --bg: #1a1a2e;
+      --card: #2e2e42;
+      --text: #e3f2fd;
+      --accent: #9c27b0;
+      --glass: rgba(255, 255, 255, 0.05);
+      --button-hover: #7b1fa2;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      padding: 2rem 1rem;
+      transition: all 0.4s ease;
+    }
+
+    header {
+      background: var(--accent);
+      padding: 1rem 2rem;
+      color: white;
+      border-radius: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+
+    #themeToggle {
+      background: white;
+      color: var(--accent);
+      border: none;
+      padding: 0.5rem 1.2rem;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    #themeToggle:hover {
+      background: var(--button-hover);
+      color: white;
+    }
+
+    main {
+      max-width: 950px;
+      margin: auto;
+    }
+
+    .summary, .form-section, .history {
+      background: var(--card);
+      padding: 2rem;
+      border-radius: 20px;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      transition: background 0.3s ease;
+    }
+
+    .summary div {
+      margin-bottom: 0.8rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    form input, form select, form button {
+      padding: 0.75rem;
+      font-size: 1rem;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      flex: 1 1 240px;
+      outline: none;
+    }
+
+    form button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    form button:hover {
+      background: var(--button-hover);
+    }
+
+    h3 {
+      margin-bottom: 1rem;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: var(--glass);
+      margin-bottom: 0.8rem;
+      padding: 1rem;
+      border-left: 6px solid var(--accent);
+      border-radius: 12px;
+      backdrop-filter: blur(4px);
+      transition: transform 0.2s ease;
+    }
+
+    li:hover {
+      transform: scale(1.01);
+    }
+
+    .income { border-color: var(--accent); }
+    .expense { border-color: #e53935; }
+
+    .tags {
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    .tag {
+      background: #cfd8dc;
+      color: #111;
+      padding: 0.3rem 0.7rem;
+      margin: 0 6px 6px 0;
+      display: inline-block;
+      border-radius: 10px;
+    }
+
+    .date {
+      font-size: 0.85rem;
+      color: gray;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 600px) {
+      form {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>💸SmartBudget</h2>
+    <button id="themeToggle">⚫</button>
+  </header>
+
+  <main>
+    <section class="summary">
+      <div>Income: ₹<span id="income">0</span></div>
+      <div>Expense: ₹<span id="expense">0</span></div>
+      <div>Balance: ₹<span id="balance">0</span></div>
+    </section>
+
+    <section class="form-section">
+      <form id="transactionForm">
+        <input type="text" id="title" placeholder="Title" required />
+        <input type="number" id="amount" placeholder="Amount" required />
+        <input type="date" id="date" required />
+        <select id="type">
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+        <input type="text" id="categories" placeholder="Categories (comma separated)" />
+        <button type="submit">Add</button>
+      </form>
+    </section>
+
+    <section class="history">
+      <h3>Transaction History</h3>
+      <ul id="transactionList"></ul>
+    </section>
+  </main>
+
+  <script>
+    const transactions = [];
+
+    document.getElementById("themeToggle").onclick = () => {
+      const html = document.documentElement;
+      html.dataset.theme = html.dataset.theme === "dark" ? "light" : "dark";
+    };
+
+    document.getElementById("transactionForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const title = document.getElementById("title").value.trim();
+      const amount = parseFloat(document.getElementById("amount").value);
+      const type = document.getElementById("type").value;
+      const date = document.getElementById("date").value;
+      const categories = document.getElementById("categories").value.split(',').map(tag => tag.trim()).filter(Boolean);
+
+      if (!title || isNaN(amount) || !date) {
+        alert("Please fill all fields correctly.");
+        return;
+      }
+
+      transactions.push({ title, amount, type, date, categories });
+      this.reset();
+      render();
+    });
+
+    function render() {
+      const list = document.getElementById("transactionList");
+      list.innerHTML = "";
+
+      const sorted = transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      let income = 0, expense = 0;
+
+      sorted.forEach(tx => {
+        if (tx.type === "income") income += tx.amount;
+        else expense += tx.amount;
+
+        const li = document.createElement("li");
+        li.classList.add(tx.type);
+        li.innerHTML = `
+          <strong>${tx.title}</strong> - ₹${tx.amount}
+          <div class="date">${tx.date}</div>
+          <div class="tags">${tx.categories.map(c => `<span class="tag">${c}</span>`).join('')}</div>
+        `;
+        list.appendChild(li);
+      });
+
+      document.getElementById("income").textContent = income.toFixed(2);
+      document.getElementById("expense").textContent = expense.toFixed(2);
+      document.getElementById("balance").textContent = (income - expense).toFixed(2);
+    }
+  </script>
+</body>
+</html>
